@@ -50,6 +50,7 @@ int parseURL(char * url, ftpConnection *connection){
   char * ptr = url;
 
   if (strncmp(url, "ftp://", 6) != 0){
+    printf("Protocol is missing in the url inserted");
     return -1;
   }
 
@@ -118,6 +119,7 @@ len1 = 0;
 }while(*ptr != '\0' && *ptr != '/');
 
 if (connection->host_len == 0){
+  printf("Host server is missing in the url inserted");
   return -2;
 }
 
@@ -136,6 +138,7 @@ do{
 }while(*ptr != '\0');
 
 if ((len1 - 1) == 0){
+  printf("File name is missing in the url inserted");
   return -3;
 }
 
