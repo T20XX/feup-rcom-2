@@ -32,6 +32,13 @@ int main(int argc, char *argv[])
     exit(2);
   }
 
+  printf("User: %.*s\n", client.user_len, client.user);
+  printf("Pass: %.*s\n", client.pass_len, client.pass);
+  printf("Host: %.*s\n", client.host_len, client.host);
+  printf("Port: %.*s\n", client.port_len, client.port);
+  printf("Path: %.*s\n", client.path_len, client.path);
+  printf("File: %.*s\n", client.filename_len, client.filename);
+
   terminate(&client);
 
   return 0;
@@ -86,7 +93,6 @@ int parseURL(char * url, ftpConnection *connection){
       connection->pass_len = len2;
       len1 = 0;
       len2 = 0;
-
     }else if (*ptr == '/'){ //ao parecer '/', buf1 e' host, buf2 e' port
     connection->host = malloc(len1);
     connection->port = malloc(len2);
@@ -99,7 +105,8 @@ int parseURL(char * url, ftpConnection *connection){
   }
 
 }while(*ptr != '\0' && *ptr != '@' && *ptr != '/');
-ptr++;
+if(*ptr == '/') break;
+else ptr++;
 
 } else if (*ptr == '/'){ //ao aparecer '/', buf1 é server host
 connection->host = malloc(len1);
@@ -114,10 +121,32 @@ if (connection->host_len == 0){
   return -2;
 }
 
-printf("User: %.*s\n", connection->user_len, connection->user);
-printf("Password: %.*s\n", connection->pass_len, connection->pass);
-printf("Host: %.*s\n", connection->host_len, connection->host);
-printf("Port: %.*s\n", connection->port_len, connection->port);
+connection->path_len = 0;
+connection->filename_len = 0;
+
+do{
+  buf1[len1] = *ptr;
+  len1++;
+  ptr++;
+  if(*ptr == '/'){
+    memcpy(&buf2[len2],&buf1, len1);
+    len2 += len1;
+    len1 = 0;
+  }
+}while(*ptr != '\0');
+
+if ((len1 - 1) == 0){
+  return -3;
+}
+
+connection->path = malloc(len2);
+memcpy(connection->path, &buf2, len2);
+connection->path_len = len2;
+
+connection->filename = malloc(len1 - 1);
+memcpy(connection->filename, &buf1[1], len1 - 1);
+connection->filename_len = len1 - 1;
+
 return 0;
 }
 
