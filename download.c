@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "getip.c"
+#include "clientTCP.c"
 
 static const char DEFAULT_USER[] = "anonymous";
 static const char DEFAULT_PASS[] = "eu";
@@ -38,6 +40,10 @@ int main(int argc, char *argv[])
   printf("Port: %.*s\n", client.port_len, client.port);
   printf("Path: %.*s\n", client.path_len, client.path);
   printf("File: %.*s\n", client.filename_len, client.filename);
+
+  getIPbyname(client.host);
+
+  conetion();
 
   terminate(&client);
 
