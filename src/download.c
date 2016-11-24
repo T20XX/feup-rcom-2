@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "getip.c"
-#include "clientTCP.c"
+#include "clientTCP.h"
 
 static const char DEFAULT_USER[] = "anonymous";
 static const char DEFAULT_PASS[] = "eu";
@@ -12,6 +11,7 @@ typedef struct  ftpConnection{
   char * user;      /*user name*/
   char * pass;      /*password*/
   char * host;      /*server host*/
+  char ip[16];      /*server ip*/
   char * port;      /*server port*/
   char * path;      /*file path*/
   char * filename;  /*name of file*/
@@ -29,23 +29,32 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  ftpConnection client;
-  if (parseURL(argv[1], &client) != 0){
+  ftpConnection connection;
+  if (parseURL(argv[1], &connection) != 0){
     exit(2);
   }
 
-  printf("User: %.*s\n", client.user_len, client.user);
-  printf("Pass: %.*s\n", client.pass_len, client.pass);
-  printf("Host: %.*s\n", client.host_len, client.host);
-  printf("Port: %.*s\n", client.port_len, client.port);
-  printf("Path: %.*s\n", client.path_len, client.path);
-  printf("File: %.*s\n", client.filename_len, client.filename);
+  printf("User: %.*s\n", connection.user_len, connection.user);
+  printf("Pass: %.*s\n", connection.pass_len, connection.pass);
+  printf("Host: %.*s\n", connection.host_len, connection.host);
+  printf("Port: %.*s\n", connection.port_len, connection.port);
+  printf("Path: %.*s\n", connection.path_len, connection.path);
+  printf("File: %.*s\n", connection.filename_len, connection.filename);
 
-  getIPbyname(client.host);
+  getIPbyname(connection.host, connection.ip);
+  printf("%s\n",  connection.ip);
 
-  conetion();
+  int socketfd;
+  socketfd = connect_to_host(connection.ip, atoi(connection.port));
 
-  terminate(&client);
+  send_logIn(socketfd, connection.user, connection.pass);
+  printf("login succesfull");
+
+  char pasv_ip[16];
+  int port = 0;
+  get_pasv(socketfd, pasv_ip, &port);
+
+  terminate(&connection);
 
   return 0;
 }
