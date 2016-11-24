@@ -51,8 +51,17 @@ int main(int argc, char *argv[])
   printf("login succesfull");
 
   char pasv_ip[16];
-  int port = 0;
-  get_pasv(socketfd, pasv_ip, &port);
+  int pasv_port = 0;
+  get_pasv(socketfd, pasv_ip, &pasv_port);
+  printf("%s:%d\n",pasv_ip,pasv_port);
+  int pasvfd;
+  pasvfd = connect_to_host(pasv_ip, pasv_port);
+
+  printf("sending path");
+  send_path(socketfd, connection.path);
+
+  download_to_file(pasvfd, connection.filename);
+
 
   terminate(&connection);
 
@@ -151,6 +160,8 @@ do{
     len1 = 0;
   }
 }while(*ptr != '\0');
+memcpy(&buf2[len2],&buf1, len1);
+len2 += len1;
 
 if ((len1 - 1) == 0){
   printf("File name is missing in the url inserted\n");
