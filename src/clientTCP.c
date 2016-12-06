@@ -32,24 +32,21 @@ int connect_to_host(char * ip,int port){
 
 	/*open an TCP socket*/
 	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-    		perror("socket()");
-        	exit(0);
-    	}
-			printf("Opened\n");
+  	perror("socket()");
+  	return -1;
+  }
+	printf("Opened\n");
 	/*connect to the server*/
-    	if(connect(sockfd,
-	           (struct sockaddr *)&server_addr,
-		   sizeof(server_addr)) < 0){
-        	perror("connect()");
-		exit(0);
+  if(connect(sockfd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
+  	perror("connect()");
+		return -2;
 	}
 	printf("Connected\n");
 	if (port == 21) {
-	char msg[100];
+		char msg[100];
 		read_from_host(sockfd, msg, "220");
 		printf("%s\n", msg);
 	}
-
 
 	return sockfd;
 	//close(sockfd);
@@ -61,7 +58,7 @@ int getIPbyname(char * hostname, char * ip){
 
         if ((h=gethostbyname(hostname)) == NULL) {
             herror("gethostbyname");
-            exit(1);
+            return -1;
         }
 
 				strcpy(ip, inet_ntoa(*((struct in_addr *)h->h_addr)));
@@ -75,18 +72,18 @@ int send_logIn(int fd, char * user, char * pass){
 	char * userMsg = malloc(6+strlen(user));
 	sprintf(userMsg,"user %s\n",user);
 	printf("%s",userMsg);
-	write_to_host(fd,userMsg);
+	if(write_to_host(fd,userMsg) != 0) return -1;
 	printf("ja pedi user\n");
-	read_from_host(fd, msg, "331");
+	if(read_from_host(fd, msg, "331") != 0) return -2;
 	printf("%s\n", msg);
 
 
 	char * passMsg = malloc(6+strlen(pass));
 	sprintf(passMsg,"pass %s\n",pass);
 	printf("%s",passMsg);
-	write_to_host(fd,passMsg);
+	if(write_to_host(fd,passMsg) != 0) return -3;
 	printf("ja pedi pass\n");
-	read_from_host(fd, msg, "230");
+	if(read_from_host(fd, msg, "230") != 0) return -4;
 
 	printf("%s\n", msg);
 
@@ -100,9 +97,9 @@ int send_path(int fd, char * path){
 	char * pathMsg = malloc(6+strlen(path));
 	sprintf(pathMsg,"retr %s\n",path);
 	printf("%s",pathMsg);
-	write_to_host(fd,pathMsg);
+	if(write_to_host(fd,pathMsg)!= 0) return -1;
 	printf("ja pedi path\n");
-	read_from_host(fd, msg, "150");
+	if(read_from_host(fd, msg, "150") != 0) return -2;
 	printf("%s\n", msg);
 
 	return 0;
@@ -112,9 +109,9 @@ int send_path(int fd, char * path){
 int get_pasv(int fd, char * ip, int * port){
 	char msg[100];
 
-	write_to_host(fd,"pasv\n");
+	if(write_to_host(fd,"pasv\n") != 0) return -1;
 	printf("ja pedi pasv");
-	read_pasv_from_host(fd, ip, port);
+	if(read_pasv_from_host(fd, ip, port)) return -2;
 
 	printf("%s:%d\n",ip,*port);
 	return 0;
@@ -179,26 +176,25 @@ int download_to_file(int fd, char * filename){
 	int bytes;
 
 	if (!(file = fopen(filename, "w"))) {
-	printf("ERROR: Cannot open file.\n");
-	return -1;
-}
-
-char*buf = malloc(1024);
-while ((bytes = read(fd, buf, sizeof(buf)))) {
-	if (bytes < 0) {
-		printf("ERROR: Nothing was received from data socket fd.\n");
+		printf("ERROR: Cannot open file.\n");
 		return -1;
 	}
 
-	if ((bytes = fwrite(buf, bytes, 1, file)) < 0) {
-		printf("ERROR: Cannot write data in file.\n");
-		return -1;
+	char*buf = malloc(1024);
+	while ((bytes = read(fd, buf, sizeof(buf)))) {
+		if (bytes < 0) {
+			printf("ERROR: Nothing was received from data socket fd.\n");
+			return -2;
+		}
+
+		if ((bytes = fwrite(buf, bytes, 1, file)) < 0) {
+			printf("ERROR: Cannot write data in file.\n");
+			return -3;
+		}
 	}
-}
 
-
-if(file)
+	if(file)
 	fclose(file);
 
-return 0;
+	return 0;
 }

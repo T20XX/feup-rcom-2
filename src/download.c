@@ -30,9 +30,7 @@ int main(int argc, char *argv[])
   }
 
   ftpConnection connection;
-  if (parseURL(argv[1], &connection) != 0){
-    exit(2);
-  }
+  if (parseURL(argv[1], &connection) != 0) exit(2);
 
   printf("User: %.*s\n", connection.user_len, connection.user);
   printf("Pass: %.*s\n", connection.pass_len, connection.pass);
@@ -41,26 +39,29 @@ int main(int argc, char *argv[])
   printf("Path: %.*s\n", connection.path_len, connection.path);
   printf("File: %.*s\n", connection.filename_len, connection.filename);
 
-  getIPbyname(connection.host, connection.ip);
+  if(getIPbyname(connection.host, connection.ip) < 0) exit(3);
+
   printf("%s\n",  connection.ip);
 
   int socketfd;
   socketfd = connect_to_host(connection.ip, atoi(connection.port));
+  if(socketfd < 0) exit(4);
 
-  send_logIn(socketfd, connection.user, connection.pass);
+  if(send_logIn(socketfd, connection.user, connection.pass) < 0) exit(5);
   printf("login succesfull");
 
   char pasv_ip[16];
   int pasv_port = 0;
-  get_pasv(socketfd, pasv_ip, &pasv_port);
+  if(get_pasv(socketfd, pasv_ip, &pasv_port) !=0) exit(6);
   printf("%s:%d\n",pasv_ip,pasv_port);
   int pasvfd;
   pasvfd = connect_to_host(pasv_ip, pasv_port);
+  if(pasvfd < 0) exit(7);
 
   printf("sending path");
-  send_path(socketfd, connection.path);
+  if(send_path(socketfd, connection.path) < 0) exit(8);
 
-  download_to_file(pasvfd, connection.filename);
+  if(download_to_file(pasvfd, connection.filename) < 0) exit(9);
 
 
   terminate(&connection);
