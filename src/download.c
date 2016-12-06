@@ -21,8 +21,7 @@ typedef struct  ftpConnection{
 int parseURL(char * url, ftpConnection *connection);
 int terminate(ftpConnection *connection);
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
 
   if (argc != 2) {
     fprintf(stderr,"usage: download URL\n");
@@ -41,27 +40,30 @@ int main(int argc, char *argv[])
 
   if(getIPbyname(connection.host, connection.ip) < 0) exit(3);
 
-  printf("%s\n",  connection.ip);
+  printf("Connecting to %s...\n",  connection.ip);
 
   int socketfd;
   socketfd = connect_to_host(connection.ip, atoi(connection.port));
   if(socketfd < 0) exit(4);
 
+  printf("Logging in...\n");
   if(send_logIn(socketfd, connection.user, connection.pass) < 0) exit(5);
-  printf("login succesfull");
+  printf("Login succesfull...\n");
 
   char pasv_ip[16];
   int pasv_port = 0;
   if(get_pasv(socketfd, pasv_ip, &pasv_port) !=0) exit(6);
-  printf("%s:%d\n",pasv_ip,pasv_port);
+  printf("Entering passive mode...\n");
+  //printf("%s:%d\n",pasv_ip,pasv_port);
   int pasvfd;
   pasvfd = connect_to_host(pasv_ip, pasv_port);
   if(pasvfd < 0) exit(7);
 
-  printf("sending path");
+  printf("Sending path to download socket...\n");
   if(send_path(socketfd, connection.path) < 0) exit(8);
-
+  printf("Downloading file...\n");
   if(download_to_file(pasvfd, connection.filename) < 0) exit(9);
+  printf("Downloading completed.\n");
 
 
   terminate(&connection);
@@ -80,6 +82,8 @@ int parseURL(char * url, ftpConnection *connection){
   }
 
   ptr+= 6;
+
+  //DEFAULT VALUES
   connection->user = (char  *) malloc(strlen(DEFAULT_USER));
   strncpy(connection->user,DEFAULT_USER,strlen(DEFAULT_USER));
   connection->user_len = strlen(DEFAULT_USER);

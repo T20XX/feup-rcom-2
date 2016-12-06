@@ -35,17 +35,17 @@ int connect_to_host(char * ip,int port){
   	perror("socket()");
   	return -1;
   }
-	printf("Opened\n");
+	printf("Socket opened...\n");
 	/*connect to the server*/
   if(connect(sockfd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
   	perror("connect()");
 		return -2;
 	}
-	printf("Connected\n");
+	printf("Connected to socket...\n");
 	if (port == 21) {
 		char msg[100];
 		read_from_host(sockfd, msg, "220");
-		printf("%s\n", msg);
+		//printf("%s\n", msg);
 	}
 
 	return sockfd;
@@ -71,36 +71,36 @@ int send_logIn(int fd, char * user, char * pass){
 	//char	userMsg[] = "user anonymous\n";
 	char * userMsg = malloc(6+strlen(user));
 	sprintf(userMsg,"user %s\n",user);
-	printf("%s",userMsg);
+	//printf("%s",userMsg);
 	if(write_to_host(fd,userMsg) != 0) return -1;
-	printf("ja pedi user\n");
+	//printf("ja pedi user\n");
 	if(read_from_host(fd, msg, "331") != 0) return -2;
-	printf("%s\n", msg);
+	//printf("%s\n", msg);
 
 
 	char * passMsg = malloc(6+strlen(pass));
 	sprintf(passMsg,"pass %s\n",pass);
-	printf("%s",passMsg);
+	//printf("%s",passMsg);
 	if(write_to_host(fd,passMsg) != 0) return -3;
-	printf("ja pedi pass\n");
+	//printf("ja pedi pass\n");
 	if(read_from_host(fd, msg, "230") != 0) return -4;
 
-	printf("%s\n", msg);
+	//printf("%s\n", msg);
 
 	return 0;
 }
 
 int send_path(int fd, char * path){
-	printf("we in");
+	//sprintf("we in");
 	char msg[100];
 	//char	pathMsg[] = "retr /pub/robots.txt\n";
 	char * pathMsg = malloc(6+strlen(path));
 	sprintf(pathMsg,"retr %s\n",path);
-	printf("%s",pathMsg);
+	//printf("%s",pathMsg);
 	if(write_to_host(fd,pathMsg)!= 0) return -1;
-	printf("ja pedi path\n");
+	//printf("ja pedi path\n");
 	if(read_from_host(fd, msg, "150") != 0) return -2;
-	printf("%s\n", msg);
+	//printf("%s\n", msg);
 
 	return 0;
 }
@@ -110,10 +110,10 @@ int get_pasv(int fd, char * ip, int * port){
 	char msg[100];
 
 	if(write_to_host(fd,"pasv\n") != 0) return -1;
-	printf("ja pedi pasv");
+	//printf("ja pedi pasv");
 	if(read_pasv_from_host(fd, ip, port)) return -2;
 
-	printf("%s:%d\n",ip,*port);
+	//printf("%s:%d\n",ip,*port);
 	return 0;
 }
 
