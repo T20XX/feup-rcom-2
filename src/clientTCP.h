@@ -8,3 +8,4 @@ int send_logIn(int fd, char * user, char * pass);
 int get_pasv(int fd, char * ip, int * port);
 int send_path(int fd, char * path);
 int download_to_file(int fd, char * filename);
+int closing_socket(int socket);

@@ -24,7 +24,7 @@ int terminate(ftpConnection *connection);
 int main(int argc, char *argv[]){
 
   if (argc != 2) {
-    fprintf(stderr,"usage: download URL\n");
+    fprintf(stderr,"Usage: download URL\n");
     exit(1);
   }
 
@@ -38,34 +38,63 @@ int main(int argc, char *argv[]){
   printf("Path: %.*s\n", connection.path_len, connection.path);
   printf("File: %.*s\n", connection.filename_len, connection.filename);
 
-  if(getIPbyname(connection.host, connection.ip) < 0) exit(3);
+  if(getIPbyname(connection.host, connection.ip) < 0) {
+    terminate(&connection);
+    exit(3);
+  };
 
   printf("Connecting to %s...\n",  connection.ip);
 
   int socketfd;
   socketfd = connect_to_host(connection.ip, atoi(connection.port));
-  if(socketfd < 0) exit(4);
+  if(socketfd < 0) {
+    terminate(&connection);
+    exit(4);
+  };
 
   printf("Logging in...\n");
-  if(send_logIn(socketfd, connection.user, connection.pass) < 0) exit(5);
+  if(send_logIn(socketfd, connection.user, connection.pass) < 0){
+     terminate(&connection);
+     closing_socket(socketfd);
+     exit(5);
+  }
   printf("Login succesfull...\n");
 
   char pasv_ip[16];
   int pasv_port = 0;
-  if(get_pasv(socketfd, pasv_ip, &pasv_port) !=0) exit(6);
+  if(get_pasv(socketfd, pasv_ip, &pasv_port) !=0){
+    terminate(&connection);
+    closing_socket(socketfd);
+    exit(6);
+  }
   printf("Entering passive mode...\n");
   //printf("%s:%d\n",pasv_ip,pasv_port);
   int pasvfd;
   pasvfd = connect_to_host(pasv_ip, pasv_port);
-  if(pasvfd < 0) exit(7);
+  if(pasvfd < 0){
+    terminate(&connection);
+    closing_socket(socketfd);
+    exit(7);
+  }
 
   printf("Sending path to download socket...\n");
-  if(send_path(socketfd, connection.path) < 0) exit(8);
+  if(send_path(socketfd, connection.path) < 0){
+    terminate(&connection);
+    closing_socket(socketfd);
+    closing_socket(pasvfd);
+    exit(8);
+  }
   printf("Downloading file...\n");
-  if(download_to_file(pasvfd, connection.filename) < 0) exit(9);
+  if(download_to_file(pasvfd, connection.filename) < 0){
+    terminate(&connection);
+    closing_socket(socketfd);
+    closing_socket(pasvfd);
+    exit(9);
+  }
   printf("Downloading completed.\n");
 
-
+  closing_socket(socketfd);
+  closing_socket(pasvfd);
   terminate(&connection);
 
   return 0;
@@ -78,6 +107,7 @@ int parseURL(char * url, ftpConnection *connection){
 
   if (strncmp(url, "ftp://", 6) != 0){
     printf("Protocol is missing in the url inserted\n");
+    printf("Closing program.\n");
     return -1;
   }
 
@@ -149,6 +179,11 @@ len1 = 0;
 
 if (connection->host_len == 0){
   printf("Host server is missing in the url inserted\n");
+  printf("Releasing memory...\n");
+  free(connection->user);
+  free(connection->pass);
+  free(connection->port);
+  free(connection->host);
   return -2;
 }
 
@@ -170,6 +205,11 @@ len2 += len1;
 
 if ((len1 - 1) == 0){
   printf("File name is missing in the url inserted\n");
+  printf("Releasing memory...\n");
+  free(connection->user);
+  free(connection->pass);
+  free(connection->port);
+  free(connection->host);
   return -3;
 }
 
@@ -185,11 +225,13 @@ return 0;
 }
 
 int terminate(ftpConnection *connection){
+  printf("Releasing memory...\n");
   free(connection->user);
   free(connection->pass);
   free(connection->host);
   free(connection->port);
   free(connection->path);
   free(connection->filename);
+  printf("Closing program.\n");
   return 0;
 }

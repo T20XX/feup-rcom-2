@@ -39,6 +39,7 @@ int connect_to_host(char * ip,int port){
 	/*connect to the server*/
   if(connect(sockfd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
   	perror("connect()");
+		closing_socket(sockfd);
 		return -2;
 	}
 	printf("Connected to socket...\n");
@@ -72,21 +73,36 @@ int send_logIn(int fd, char * user, char * pass){
 	char * userMsg = malloc(6+strlen(user));
 	sprintf(userMsg,"user %s\n",user);
 	//printf("%s",userMsg);
-	if(write_to_host(fd,userMsg) != 0) return -1;
+	if(write_to_host(fd,userMsg) != 0) {
+		free(userMsg);
+		return -1;
+	}
 	//printf("ja pedi user\n");
-	if(read_from_host(fd, msg, "331") != 0) return -2;
+	if(read_from_host(fd, msg, "331") != 0){
+		free(userMsg);
+		return -2;
+	}
 	//printf("%s\n", msg);
 
 
 	char * passMsg = malloc(6+strlen(pass));
 	sprintf(passMsg,"pass %s\n",pass);
 	//printf("%s",passMsg);
-	if(write_to_host(fd,passMsg) != 0) return -3;
+	if(write_to_host(fd,passMsg) != 0){
+		free(userMsg);
+		free(passMsg);
+		return -3;
+	}
 	//printf("ja pedi pass\n");
-	if(read_from_host(fd, msg, "230") != 0) return -4;
+	if(read_from_host(fd, msg, "230") != 0){
+		free(userMsg);
+		free(passMsg);
+		return -4;
+	}
 
 	//printf("%s\n", msg);
-
+	free(userMsg);
+	free(passMsg);
 	return 0;
 }
 
@@ -97,9 +113,15 @@ int send_path(int fd, char * path){
 	char * pathMsg = malloc(6+strlen(path));
 	sprintf(pathMsg,"retr %s\n",path);
 	//printf("%s",pathMsg);
-	if(write_to_host(fd,pathMsg)!= 0) return -1;
+	if(write_to_host(fd,pathMsg)!= 0){
+		free(pathMsg);
+		return -1;
+	}
 	//printf("ja pedi path\n");
-	if(read_from_host(fd, msg, "150") != 0) return -2;
+	if(read_from_host(fd, msg, "150") != 0){
+		free(pathMsg);
+		return -2;
+	}
 	//printf("%s\n", msg);
 
 	return 0;
@@ -107,7 +129,7 @@ int send_path(int fd, char * path){
 
 
 int get_pasv(int fd, char * ip, int * port){
-	char msg[100];
+	//char msg[100];
 
 	if(write_to_host(fd,"pasv\n") != 0) return -1;
 	//printf("ja pedi pasv");
@@ -159,16 +181,20 @@ int read_pasv_from_host(int connection_fd, char * ip, int * port) {
 	int port_arr[2];
 
 		if ((sscanf(msg, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)",
-			&ipTmp[0], &ipTmp[1], &ipTmp[2], &ipTmp[3], &port_arr[0], &port_arr[1])) < 0)
+			&ipTmp[0], &ipTmp[1], &ipTmp[2], &ipTmp[3], &port_arr[0], &port_arr[1])) < 0){
+			free(msg);
 			return -1;
+		}
 
-		if (sprintf(ip, "%d.%d.%d.%d", ipTmp[0], ipTmp[1], ipTmp[2], ipTmp[3]) < 0)
+		if (sprintf(ip, "%d.%d.%d.%d", ipTmp[0], ipTmp[1], ipTmp[2], ipTmp[3]) < 0){
+			free(msg);
 			return -1;
+		}
 
 	*port = 256 * port_arr[0] + port_arr[1];
 
 	free(msg);
-		return 0;
+	return 0;
 }
 
 int download_to_file(int fd, char * filename){
@@ -184,17 +210,29 @@ int download_to_file(int fd, char * filename){
 	while ((bytes = read(fd, buf, sizeof(buf)))) {
 		if (bytes < 0) {
 			printf("ERROR: Nothing was received from data socket fd.\n");
+			free(buf);
 			return -2;
 		}
 
 		if ((bytes = fwrite(buf, bytes, 1, file)) < 0) {
 			printf("ERROR: Cannot write data in file.\n");
+			free(buf);
 			return -3;
 		}
 	}
 
 	if(file)
 	fclose(file);
+	free(buf);
+	return 0;
+}
 
+int closing_socket(int socket){
+	printf("Closing socket...\n");
+	if(shutdown(socket,2) == -1){
+		printf("Error closing socket...\n");
+		return -1;
+	}
+	printf("Socket closed succesfully.\n");
 	return 0;
 }
