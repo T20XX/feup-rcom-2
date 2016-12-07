@@ -29,7 +29,10 @@ int main(int argc, char *argv[]){
   }
 
   ftpConnection connection;
-  if (parseURL(argv[1], &connection) != 0) exit(2);
+  if (parseURL(argv[1], &connection) != 0){
+    printf("Closing program.\n");
+    exit(2);
+  }
 
   printf("User: %.*s\n", connection.user_len, connection.user);
   printf("Pass: %.*s\n", connection.pass_len, connection.pass);
@@ -54,21 +57,24 @@ int main(int argc, char *argv[]){
 
   printf("Logging in...\n");
   if(send_logIn(socketfd, connection.user, connection.pass) < 0){
-     terminate(&connection);
-     closing_socket(socketfd);
-     exit(5);
+    printf("Log in failed...\n");
+    terminate(&connection);
+    closing_socket(socketfd);
+    exit(5);
   }
   printf("Login succesfull...\n");
 
+
+  printf("Entering passive mode...\n");
   char pasv_ip[16];
   int pasv_port = 0;
+
   if(get_pasv(socketfd, pasv_ip, &pasv_port) !=0){
+    printf("Error entering passive mode...\n");
     terminate(&connection);
     closing_socket(socketfd);
     exit(6);
   }
-  printf("Entering passive mode...\n");
-  //printf("%s:%d\n",pasv_ip,pasv_port);
   int pasvfd;
   pasvfd = connect_to_host(pasv_ip, pasv_port);
   if(pasvfd < 0){
@@ -79,6 +85,7 @@ int main(int argc, char *argv[]){
 
   printf("Sending path to download socket...\n");
   if(send_path(socketfd, connection.path) < 0){
+    printf("Error sending path to download socket...\n");
     terminate(&connection);
     closing_socket(socketfd);
     closing_socket(pasvfd);
@@ -107,7 +114,6 @@ int parseURL(char * url, ftpConnection *connection){
 
   if (strncmp(url, "ftp://", 6) != 0){
     printf("Protocol is missing in the url inserted\n");
-    printf("Closing program.\n");
     return -1;
   }
 

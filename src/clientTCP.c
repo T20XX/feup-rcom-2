@@ -22,7 +22,6 @@ int connect_to_host(char * ip,int port){
 
 	int	sockfd;
 	struct	sockaddr_in server_addr;
-	//char	buf[] = "user anonymous\n";
 
 	/*server address handling*/
 	bzero((char*)&server_addr,sizeof(server_addr));
@@ -32,13 +31,13 @@ int connect_to_host(char * ip,int port){
 
 	/*open an TCP socket*/
 	if ((sockfd = socket(AF_INET,SOCK_STREAM,0)) < 0) {
-  	perror("socket()");
+  	perror("Error opening the socket...\n");
   	return -1;
   }
 	printf("Socket opened...\n");
 	/*connect to the server*/
   if(connect(sockfd,(struct sockaddr *)&server_addr,sizeof(server_addr)) < 0){
-  	perror("connect()");
+  	perror("Error connecting to the server...\n");
 		closing_socket(sockfd);
 		return -2;
 	}
@@ -46,12 +45,9 @@ int connect_to_host(char * ip,int port){
 	if (port == 21) {
 		char msg[100];
 		read_from_host(sockfd, msg, "220");
-		//printf("%s\n", msg);
 	}
 
 	return sockfd;
-	//close(sockfd);
-	//exit(0);
 }
 
 int getIPbyname(char * hostname, char * ip){
@@ -69,79 +65,70 @@ int getIPbyname(char * hostname, char * ip){
 
 int send_logIn(int fd, char * user, char * pass){
 	char msg[100];
-	//char	userMsg[] = "user anonymous\n";
+
 	char * userMsg = malloc(6+strlen(user));
 	sprintf(userMsg,"user %s\n",user);
-	//printf("%s",userMsg);
+
 	if(write_to_host(fd,userMsg) != 0) {
 		free(userMsg);
 		return -1;
 	}
-	//printf("ja pedi user\n");
+
 	if(read_from_host(fd, msg, "331") != 0){
 		free(userMsg);
 		return -2;
 	}
-	//printf("%s\n", msg);
-
 
 	char * passMsg = malloc(6+strlen(pass));
 	sprintf(passMsg,"pass %s\n",pass);
-	//printf("%s",passMsg);
+
 	if(write_to_host(fd,passMsg) != 0){
 		free(userMsg);
 		free(passMsg);
 		return -3;
 	}
-	//printf("ja pedi pass\n");
+
 	if(read_from_host(fd, msg, "230") != 0){
 		free(userMsg);
 		free(passMsg);
 		return -4;
 	}
 
-	//printf("%s\n", msg);
 	free(userMsg);
 	free(passMsg);
 	return 0;
 }
 
 int send_path(int fd, char * path){
-	//sprintf("we in");
 	char msg[100];
-	//char	pathMsg[] = "retr /pub/robots.txt\n";
 	char * pathMsg = malloc(6+strlen(path));
 	sprintf(pathMsg,"retr %s\n",path);
-	//printf("%s",pathMsg);
+
 	if(write_to_host(fd,pathMsg)!= 0){
 		free(pathMsg);
 		return -1;
 	}
-	//printf("ja pedi path\n");
+
 	if(read_from_host(fd, msg, "150") != 0){
 		free(pathMsg);
 		return -2;
 	}
-	//printf("%s\n", msg);
 
 	return 0;
 }
 
 
 int get_pasv(int fd, char * ip, int * port){
-	//char msg[100];
 
 	if(write_to_host(fd,"pasv\n") != 0) return -1;
-	//printf("ja pedi pasv");
-	if(read_pasv_from_host(fd, ip, port)) return -2;
+	if(read_pasv_from_host(fd, ip, port) != 0) return -2;
 
-	//printf("%s:%d\n",ip,*port);
 	return 0;
 }
 
 
 int write_to_host(int connection_fd, char * msg) {
-		int	bytes;
+	int	bytes;
 	/*send a string to the server*/
 	bytes = write(connection_fd, msg, strlen(msg));
 	if(bytes == strlen(msg)) return 0;
