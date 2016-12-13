@@ -225,9 +225,10 @@ if ((len1 - 1) == 0){
   return -3;
 }
 
-connection->path = malloc(len2);
+connection->path = malloc(len2 + 1);
 memcpy(connection->path, &buf2, len2);
-connection->path_len = len2;
+memcpy(connection->path+len2, "\0", 1);
+connection->path_len = len2 + 1;
 
 connection->filename = malloc(len1 - 1);
 memcpy(connection->filename, &buf1[1], len1 - 1);

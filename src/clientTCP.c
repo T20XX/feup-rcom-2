@@ -103,6 +103,7 @@ int send_path(int fd, char * path){
 	char msg[100];
 	char * pathMsg = malloc(6+strlen(path));
 	sprintf(pathMsg,"retr %s\n",path);
+	printf("%s",pathMsg);
 
 	if(write_to_host(fd,pathMsg)!= 0){
 		free(pathMsg);
