@@ -4,7 +4,7 @@
 #include "clientTCP.h"
 
 static const char DEFAULT_USER[] = "anonymous";
-static const char DEFAULT_PASS[] = "eu";
+static const char DEFAULT_PASS[] = "";
 static const char DEFAULT_PORT[] = "21";
 
 typedef struct  ftpConnection{
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]){
 
   printf("Entering passive mode...\n");
   char pasv_ip[16];
-  int pasv_port = 0;
+  long int pasv_port = 0;
 
   if(get_pasv(socketfd, pasv_ip, &pasv_port) !=0){
     printf("Error entering passive mode...\n");
@@ -75,6 +75,7 @@ int main(int argc, char *argv[]){
     closing_socket(socketfd);
     exit(6);
   }
+printf("%s\n%d", pasv_ip, pasv_port);
   int pasvfd;
   pasvfd = connect_to_host(pasv_ip, pasv_port);
   if(pasvfd < 0){
@@ -175,9 +176,10 @@ if(*ptr == '/') break;
 else ptr++;
 
 } else if (*ptr == '/'){ //ao aparecer '/', buf1 é server host
-connection->host = malloc(len1);
+connection->host = malloc(len1 + 1);
 memcpy(connection->host,&buf1, len1);
-connection->host_len = len1;
+memcpy(connection->host+len1,"\0", 1);
+connection->host_len = len1+1;
 len1 = 0;
 
 }

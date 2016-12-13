@@ -16,7 +16,7 @@
 #define SERVER_PORT 6000
 #define SERVER_ADDR "192.168.28.96"
 
-int read_pasv_from_host(int connection_fd, char * ip, int * port);
+int read_pasv_from_host(int connection_fd, char * ip, long int * port);
 
 int connect_to_host(char * ip,int port){
 
@@ -52,7 +52,7 @@ int connect_to_host(char * ip,int port){
 
 int getIPbyname(char * hostname, char * ip){
 	struct hostent * h;
-
+	printf("%s\n", hostname);
         if ((h=gethostbyname(hostname)) == NULL) {
             herror("gethostbyname");
             return -1;
@@ -118,7 +118,7 @@ int send_path(int fd, char * path){
 }
 
 
-int get_pasv(int fd, char * ip, int * port){
+int get_pasv(int fd, char * ip, long int * port){
 
 	if(write_to_host(fd,"pasv\n") != 0) return -1;
 	if(read_pasv_from_host(fd, ip, port) != 0) return -2;
@@ -152,10 +152,10 @@ int read_from_host(int connection_fd, char * msg, char * expected) {
 	else return -1;
 }
 
-int read_pasv_from_host(int connection_fd, char * ip, int * port) {
+int read_pasv_from_host(int connection_fd, char * ip, long int * port) {
 
 	FILE* fp = fdopen(connection_fd, "r");
-	int size = 512;
+	int size = 1024;
 	char * msg = malloc(size * sizeof(char));
 
 	do {
