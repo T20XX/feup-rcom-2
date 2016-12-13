@@ -65,6 +65,10 @@ int main(int argc, char *argv[]){
   printf("Login succesfull...\n");
 
 
+write_to_host(socketfd, "type i\n") ;
+char msg[100];
+read_from_host(socketfd, msg, "200") ;
+
   printf("Entering passive mode...\n");
   char pasv_ip[16];
   long int pasv_port = 0;

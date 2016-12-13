@@ -159,6 +159,12 @@ int read_pasv_from_host(int connection_fd, char * ip, long int * port) {
 	char * msg = malloc(size * sizeof(char));
 
 	do {
+		memset(msg, 0, 4);
+		msg = fgets(msg, 4, fp);
+
+	} while (!('1' <= msg[0] && msg[0] <= '5'));
+
+	do {
 		memset(msg, 0, size);
 		msg = fgets(msg, size, fp);
 
@@ -167,11 +173,14 @@ int read_pasv_from_host(int connection_fd, char * ip, long int * port) {
 	int ipTmp[4];
 	int port_arr[2];
 
+	printf("%s\n",msg);
+
 		if ((sscanf(msg, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)",
 			&ipTmp[0], &ipTmp[1], &ipTmp[2], &ipTmp[3], &port_arr[0], &port_arr[1])) < 0){
 			free(msg);
 			return -1;
 		}
+		printf("ipTmp:%d.%d.%d.%d:%d.%d\n",ipTmp[0],ipTmp[1],ipTmp[2],ipTmp[3],port_arr[0],port_arr[1]);
 
 		if (sprintf(ip, "%d.%d.%d.%d", ipTmp[0], ipTmp[1], ipTmp[2], ipTmp[3]) < 0){
 			free(msg);
