@@ -1,1 +1,2 @@
-# RCOM-Project-2
+# RCOM
+Redes de Computadores (FEUP)
